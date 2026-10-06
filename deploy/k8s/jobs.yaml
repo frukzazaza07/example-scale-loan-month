@@ -1,0 +1,329 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "webhook-api-migrate"
+      },
+      "spec": {
+        "backoffLimit": 6,
+        "template": {
+          "spec": {
+            "restartPolicy": "OnFailure",
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "migrate",
+                "image": "lms-webhook:local",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "--migrate"
+                ],
+                "env": [
+                  {
+                    "name": "AUTH_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "AUTH_SECRET"
+                      }
+                    }
+                  },
+                  {
+                    "name": "DATABASE_URL",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "DB_URL_WEBHOOK"
+                      }
+                    }
+                  },
+                  {
+                    "name": "BANK_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "BANK_SECRET"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "512Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "loan-api-migrate"
+      },
+      "spec": {
+        "backoffLimit": 6,
+        "template": {
+          "spec": {
+            "restartPolicy": "OnFailure",
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "migrate",
+                "image": "lms-loan:local",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "--migrate"
+                ],
+                "env": [
+                  {
+                    "name": "AUTH_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "AUTH_SECRET"
+                      }
+                    }
+                  },
+                  {
+                    "name": "DATABASE_URL",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "DB_URL_LOAN"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "512Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "notification-migrate"
+      },
+      "spec": {
+        "backoffLimit": 6,
+        "template": {
+          "spec": {
+            "restartPolicy": "OnFailure",
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "migrate",
+                "image": "lms-notification:local",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "--migrate"
+                ],
+                "env": [
+                  {
+                    "name": "AUTH_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "AUTH_SECRET"
+                      }
+                    }
+                  },
+                  {
+                    "name": "DATABASE_URL",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "DB_URL_NOTIFICATION"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "512Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "simulator-migrate"
+      },
+      "spec": {
+        "backoffLimit": 6,
+        "template": {
+          "spec": {
+            "restartPolicy": "OnFailure",
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "migrate",
+                "image": "lms-simulator:local",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "--migrate"
+                ],
+                "env": [
+                  {
+                    "name": "AUTH_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "AUTH_SECRET"
+                      }
+                    }
+                  },
+                  {
+                    "name": "DATABASE_URL",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "DB_URL_SIMULATOR"
+                      }
+                    }
+                  },
+                  {
+                    "name": "BANK_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "BANK_SECRET"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "512Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "loan-seed"
+      },
+      "spec": {
+        "backoffLimit": 6,
+        "template": {
+          "spec": {
+            "restartPolicy": "OnFailure",
+            "automountServiceAccountToken": false,
+            "initContainers": [
+              {
+                "name": "wait-migration",
+                "image": "postgres:17.6-alpine",
+                "command": [
+                  "sh",
+                  "-c",
+                  "until psql \"$SEED_CONNECTION\" -tAc 'SELECT count(*) FROM loans' >/dev/null 2>&1; do sleep 2; done"
+                ],
+                "env": [
+                  {
+                    "name": "SEED_CONNECTION",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "SEED_CONNECTION"
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "containers": [
+              {
+                "name": "seed",
+                "image": "lms-loan:local",
+                "args": [
+                  "--seed"
+                ],
+                "env": [
+                  {
+                    "name": "AUTH_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "AUTH_SECRET"
+                      }
+                    }
+                  },
+                  {
+                    "name": "DATABASE_URL",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "lms-secrets",
+                        "key": "DB_URL_LOAN"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SEED_COUNT",
+                    "value": "1000"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "512Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

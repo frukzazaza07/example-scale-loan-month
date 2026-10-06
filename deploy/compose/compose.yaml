@@ -1,0 +1,123 @@
+name: month-end-lms
+x-common: &common
+  AUTH_SECRET: ${AUTH_SECRET:?Copy .env.example to .env}
+  RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+x-service: &service
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 45s
+  healthcheck:
+    test: [CMD-SHELL, "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"]
+    interval: 10s
+    timeout: 5s
+    retries: 12
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    command: [postgres, -c, max_connections=200]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      WEBHOOK_DB_PASSWORD: ${WEBHOOK_DB_PASSWORD}
+      LOAN_DB_PASSWORD: ${LOAN_DB_PASSWORD}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      SIMULATOR_DB_PASSWORD: ${SIMULATOR_DB_PASSWORD}
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data", "./init-databases.sh:/docker-entrypoint-initdb.d/01-services.sh:ro"]
+    healthcheck: {test: [CMD-SHELL, "pg_isready -U postgres"], interval: 3s, timeout: 3s, retries: 30}
+  rabbitmq:
+    image: rabbitmq:4.1.4-management-alpine
+    hostname: rabbitmq
+    environment: {RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}", RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}", RABBITMQ_NODENAME: "rabbit@rabbitmq"}
+    ports: ["127.0.0.1:5672:5672", "127.0.0.1:15672:15672"]
+    volumes: ["rabbitmq-data:/var/lib/rabbitmq"]
+    healthcheck: {test: [CMD, rabbitmq-diagnostics, -q, ping], interval: 5s, timeout: 5s, retries: 30}
+  webhook-migrate:
+    build: {context: ../.., dockerfile: backend/Dockerfile, args: {SERVICE: WebhookApi}}
+    image: lms-webhook:local
+    environment: {<<: *common, BANK_SECRET: "${BANK_SECRET}", DATABASE_URL: "Host=postgres;Database=webhook;Username=webhook;Password=${WEBHOOK_DB_PASSWORD};Maximum Pool Size=5"}
+    command: [--migrate]
+    depends_on: {postgres: {condition: service_healthy}}
+  loan-migrate:
+    build: {context: ../.., dockerfile: backend/Dockerfile, args: {SERVICE: LoanService}}
+    image: lms-loan:local
+    environment: {<<: *common, DATABASE_URL: "Host=postgres;Database=loan;Username=loan;Password=${LOAN_DB_PASSWORD};Maximum Pool Size=5"}
+    command: [--migrate]
+    depends_on: {postgres: {condition: service_healthy}}
+  notification-migrate:
+    build: {context: ../.., dockerfile: backend/Dockerfile, args: {SERVICE: NotificationService}}
+    image: lms-notification:local
+    environment: {<<: *common, DATABASE_URL: "Host=postgres;Database=notification;Username=notification;Password=${NOTIFICATION_DB_PASSWORD};Maximum Pool Size=5"}
+    command: [--migrate]
+    depends_on: {postgres: {condition: service_healthy}}
+  simulator-migrate:
+    build: {context: ../.., dockerfile: backend/Dockerfile, args: {SERVICE: BankSimulator}}
+    image: lms-simulator:local
+    environment: {<<: *common, BANK_SECRET: "${BANK_SECRET}", DATABASE_URL: "Host=postgres;Database=simulator;Username=simulator;Password=${SIMULATOR_DB_PASSWORD};Maximum Pool Size=5"}
+    command: [--migrate]
+    depends_on: {postgres: {condition: service_healthy}}
+  seed:
+    image: lms-loan:local
+    environment: {<<: *common, DATABASE_URL: "Host=postgres;Database=loan;Username=loan;Password=${LOAN_DB_PASSWORD};Maximum Pool Size=5", SEED_COUNT: "1000"}
+    command: [--seed]
+    depends_on: {loan-migrate: {condition: service_completed_successfully}}
+  webhook:
+    <<: *service
+    image: lms-webhook:local
+    environment: {<<: *common, BANK_SECRET: "${BANK_SECRET}", DATABASE_URL: "Host=postgres;Database=webhook;Username=webhook;Password=${WEBHOOK_DB_PASSWORD};Maximum Pool Size=5", OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"}
+    ports: ["127.0.0.1:5101:8080"]
+    depends_on: {webhook-migrate: {condition: service_completed_successfully}}
+  loan-api:
+    <<: *service
+    image: lms-loan:local
+    environment: {<<: *common, DATABASE_URL: "Host=postgres;Database=loan;Username=loan;Password=${LOAN_DB_PASSWORD};Maximum Pool Size=5", SERVICE_MODE: api}
+    ports: ["127.0.0.1:5102:8080"]
+    depends_on: {seed: {condition: service_completed_successfully}}
+  loan-worker:
+    <<: *service
+    image: lms-loan:local
+    environment: {<<: *common, DATABASE_URL: "Host=postgres;Database=loan;Username=loan;Password=${LOAN_DB_PASSWORD};Maximum Pool Size=5", SERVICE_MODE: worker, OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"}
+    depends_on: {seed: {condition: service_completed_successfully}, rabbitmq: {condition: service_healthy}}
+  notification:
+    <<: *service
+    image: lms-notification:local
+    environment: {<<: *common, DATABASE_URL: "Host=postgres;Database=notification;Username=notification;Password=${NOTIFICATION_DB_PASSWORD};Maximum Pool Size=5"}
+    depends_on: {notification-migrate: {condition: service_completed_successfully}}
+  simulator:
+    <<: *service
+    image: lms-simulator:local
+    environment: {<<: *common, BANK_SECRET: "${BANK_SECRET}", WEBHOOK_URL: "http://webhook:8080", DATABASE_URL: "Host=postgres;Database=simulator;Username=simulator;Password=${SIMULATOR_DB_PASSWORD};Maximum Pool Size=5"}
+    depends_on: {simulator-migrate: {condition: service_completed_successfully}, webhook: {condition: service_started}}
+  demo-api:
+    <<: *service
+    build: {context: ../.., dockerfile: backend/Dockerfile, args: {SERVICE: DemoApi}}
+    image: lms-demo-api:local
+    environment: {<<: *common, ADMIN_PASSWORD: "${ADMIN_PASSWORD}", OBSERVER_PASSWORD: "${OBSERVER_PASSWORD}", WEBHOOK_URL: "http://webhook:8080", LOAN_URL: "http://loan-api:8080", NOTIFICATION_URL: "http://notification:8080", SIMULATOR_URL: "http://simulator:8080", RABBITMQ_MANAGEMENT_URL: "http://rabbitmq:15672", RUNTIME_MODE: Compose, PROMETHEUS_URL: "http://prometheus:9090", PUBLIC_GRAFANA_URL: "http://localhost:3000", PUBLIC_TRACE_URL: "http://localhost:16686"}
+    ports: ["127.0.0.1:5100:8080"]
+  frontend:
+    build: {context: ../../frontend}
+    image: lms-frontend:local
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on: [demo-api]
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: [observability]
+    volumes: ["./prometheus.yml:/etc/prometheus/prometheus.yml:ro", "prometheus-data:/prometheus"]
+    ports: ["127.0.0.1:9090:9090"]
+  grafana:
+    image: grafana/grafana:12.1.1
+    profiles: [observability]
+    environment: {GF_SECURITY_ADMIN_USER: admin, GF_SECURITY_ADMIN_PASSWORD: "${ADMIN_PASSWORD}"}
+    volumes: ["./grafana:/etc/grafana/provisioning:ro", "grafana-data:/var/lib/grafana"]
+    ports: ["127.0.0.1:3000:3000"]
+  jaeger:
+    image: jaegertracing/all-in-one:1.71.0
+    profiles: [observability]
+    environment: {COLLECTOR_OTLP_ENABLED: "true"}
+    ports: ["127.0.0.1:16686:16686"]
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  prometheus-data:
+  grafana-data:
+

@@ -1,0 +1,87 @@
+{
+    "frontendUnitPassed":  2,
+    "integrationPassed":  19,
+    "workerRecovery":  {
+                           "runId":  "25506c34-2bcd-4268-8d31-0c6e994aeb15",
+                           "paymentJournals":  12000,
+                           "firstObservedEmptyUtc":  "2026-10-06T16:50:31.6078900+00:00",
+                           "firstObservedWorkerScaleInUtc":  "2026-10-06T16:52:08.0306981+00:00",
+                           "workersMax":  6,
+                           "unbalancedJournals":  0,
+                           "workersMin":  1,
+                           "peakObservedQueueReady":  3430,
+                           "ledgerUniqueTransactions":  12000
+                       },
+    "brokerRecovery":  {
+                           "publishedAfterRecovery":  true,
+                           "applicationStatus":  "Applied",
+                           "bankTransactionId":  "broker-recovery-9a9d2998222f4d94bb11e2fa3fcad7bd",
+                           "paymentJournalCount":  1,
+                           "durableReceiptDuringOutage":  true,
+                           "checkedAt":  "2026-10-06T16:32:35.2848342+00:00"
+                       },
+    "backendUnitPassed":  12,
+    "loadRuns":  [
+                     {
+                         "achievedRps":  96.71335227039873,
+                         "timeouts":  0,
+                         "retryable":  0,
+                         "attemptedDeliveries":  12000,
+                         "acceptedReceipts":  12000,
+                         "plannedUnique":  12000,
+                         "targetDurationSeconds":  120,
+                         "runId":  "683b7382-cc1a-45c2-9c2f-9f9c53416199",
+                         "rejected":  0,
+                         "maxSchedulingLagMs":  167.2706,
+                         "targetRps":  100,
+                         "reconciliationCutoff":  "2026-10-06T16:44:50.350801+00:00",
+                         "counts":  {
+                                        "Matched":  12000
+                                    },
+                         "totals":  {
+                                        "Matched":  "10800000000"
+                                    }
+                     },
+                     {
+                         "achievedRps":  72.174190098228,
+                         "timeouts":  0,
+                         "retryable":  0,
+                         "attemptedDeliveries":  12000,
+                         "acceptedReceipts":  12000,
+                         "plannedUnique":  12000,
+                         "targetDurationSeconds":  120,
+                         "runId":  "25506c34-2bcd-4268-8d31-0c6e994aeb15",
+                         "rejected":  0,
+                         "maxSchedulingLagMs":  42617.6701,
+                         "targetRps":  100,
+                         "reconciliationCutoff":  "2026-10-06T16:53:53.6628563+00:00",
+                         "counts":  {
+                                        "Matched":  12000
+                                    },
+                         "totals":  {
+                                        "Matched":  "10800000000"
+                                    }
+                     }
+                 ],
+    "validatedUtcDate":  "2026-10-06",
+    "baseline":  {
+                     "runId":  "8a9c6d32-4525-40b5-8dbd-fe922e8b890b",
+                     "application":  {
+                                         "runId":  "8a9c6d32-4525-40b5-8dbd-fe922e8b890b",
+                                         "processedUnique":  50,
+                                         "appliedUnique":  50,
+                                         "creditReview":  50,
+                                         "unmatched":  0,
+                                         "bankDeclined":  0,
+                                         "refreshedAt":  "2026-10-06T17:08:42.6799072+00:00",
+                                         "source":  "LoanService processing records"
+                                     },
+                     "acceptedReceipts":  50,
+                     "attemptedDeliveries":  50,
+                     "targetRps":  5,
+                     "acceptanceP95Seconds":  null,
+                     "applicationP95Seconds":  null,
+                     "maxSchedulingLagMs":  9.2141,
+                     "achievedRps":  4.689516931922939
+                 }
+}

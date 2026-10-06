@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/BankSimulator/BankSimulator.csproj" />
+    <Project Path="backend/DemoApi/DemoApi.csproj" />
+    <Project Path="backend/LoanService/LoanService.csproj" />
+    <Project Path="backend/NotificationService/NotificationService.csproj" />
+    <Project Path="backend/Shared/Shared.csproj" />
+    <Project Path="backend/WebhookApi/WebhookApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Finance.Tests/Finance.Tests.csproj" />
+    <Project Path="tests/Integration.Tests/Integration.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,2 @@
+<script setup lang="ts">defineProps<{loading:boolean;error:string;updatedAt?:string}>();</script>
+<template><div v-if="loading" class="state">Connecting to services…</div><el-alert v-if="error" :title="error" description="Last successfully loaded data may be stale. Retrying with backoff." type="warning" :closable="false"/><span v-if="updatedAt" class="freshness">Observed {{new Date(updatedAt).toLocaleTimeString()}}</span></template>

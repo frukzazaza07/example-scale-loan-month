@@ -1,0 +1,6 @@
+global:
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: lms
+    static_configs:
+      - targets: ['webhook:8080', 'loan-api:8080', 'loan-worker:8080', 'notification:8080', 'simulator:8080', 'demo-api:8080']

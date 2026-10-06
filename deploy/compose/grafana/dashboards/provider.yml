@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: LMS
+    folder: LMS Demo
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards

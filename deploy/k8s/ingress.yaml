@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lms-demo
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '120'
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: lms.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: {service: {name: frontend, port: {number: 8080}}}

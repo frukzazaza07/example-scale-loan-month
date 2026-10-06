@@ -1,0 +1,27 @@
+export interface Page<T> { total: number; items: T[] }
+export interface Loan { id: number; reference: string; customer: string; openingPrincipal: string; outstandingPrincipal: string; paidPrincipal: string; annualRate: number; monthlyPayment: string; paidInterest: string; unappliedCredit: string; dueInterest: string; dueAmount: string; nextDueDate: string | null; status: string }
+export interface Installment { id: number; number: number; dueDate: string; scheduledOpeningPrincipal: string; interest: string; principal: string; scheduledClosingPrincipal: string; paidInterest: string; paidPrincipal: string }
+export interface Allocation { installmentNumber: number; interest: string; principal: string }
+export interface Payment { id: string; eventId: string; bankTransactionId: string; originalReference: string; resolvedReference: string | null; bankOutcome: string; amountMinor: string; status: string; reason: string | null; paidAt: string; receivedAt: string; appliedAt: string | null; attempts: number; lateReview: boolean; correlationId: string; allocations: Allocation[] }
+export interface Posting { account: string; debit: string; credit: string }
+export interface Journal { id: string; kind: string; postedAt: string; postings: Posting[] }
+export interface LoanDetail { loan: Loan; installments: Installment[]; payments: Payment[]; journals: Journal[] }
+export interface Receipt { id: string; eventId: string; bankTransactionId: string; paymentReference: string; amountMinor: string; bankOutcome: string; paidAt: string; receivedAt: string; attempts: number; status: string; reason: string | null; correlationId: string; outbox: { publishedAt: string | null; createdAt: string; attempts: number; lastError: string | null } }
+export interface RunConfig { preset: string; targetRps: number; durationSeconds: number; concurrency: number; randomSeed: number; duplicatePercent: number; invalidSignaturePercent: number; bankFailedPercent: number; unknownReferencePercent: number; missingPercent: number; loanReference: string | null; amountMinor: string }
+export interface Run { id: string; preset: string; status: string; createdAt: string; finishedAt: string | null; plannedUnique: number; maximumLagMs: number; businessDate: string }
+export interface RunReport { run: Run; config: RunConfig; attemptedDeliveries: number; achievedRps: number; acceptedReceipts: number; rejected: number; timeouts: number; retryable: number; maxSchedulingLagMs: number; duplicateCopies: number; skipped: number; responseBreakdown: { code: number | null; count: number }[]; recentAttempts: { id: number; bankTransactionId: string; startedAt: string; durationMs: number; responseCode: number | null }[] }
+export interface Overview { loans: { activeLoans: number; outstandingPrincipal: string; dueAmount: string; appliedPaymentsToday: number; reviewCount: number; cutoff: string; consistency: string; unavailable?: boolean }; webhook: { receipts: number; attempts: number; pendingOutbox: number; oldestPendingAt: string | null; unavailable?: boolean }; runs: Run[]; refreshedAt: string; runtimeMode: string; businessDate: string }
+export interface Metric { runtimeMode: string; refreshedAt: string; dependencies: Record<string,{status: string; source: string}>; queue: null | {ready: number; unacknowledged: number; consumers: number; publishRate: number | null; deliveryRate: number | null; oldestAgeStatus: string; source: string}; autoscaling: string; requestRate: null | {value: [number,string]}[]; httpMeanLatency: null | {value:[number,string]}[]; acceptanceLatency: Quantile; applicationLatency: Quantile; cluster: null | { deployments: {name:string; replicas:number; status:{replicas?:number;readyReplicas?:number;availableReplicas?:number}}[]; hpa: {name:string;status:unknown;metrics:unknown}[]; keda: {name:string;status:unknown}[]; pods: {name:string;status:{phase:string}}[] }; grafanaUrl: string | null; traceUrl: string | null; capacityNote: string }
+export interface Audit { id:string; actor:string; action:string; identity:string; details?:string; at:string }
+export type Quantile = null | {value:[number,string]}[];
+export interface Conflict { id:string; bankTransactionId:string; eventId:string; reason:string; at:string }
+export interface FailedMessage { id:string; identity:string; reason:string; attempts:number; failedAt:string; replayedAt:string | null }
+export interface Failures { loan: { reviews:Payment[];conflicts:Conflict[];failedMessages:FailedMessage[];audit:Audit[];unavailable?:boolean }; webhook: {conflicts:Receipt[];validation:{id:string;reason:string;at:string}[];unavailable?:boolean};simulatorAudit:Audit[] }
+export interface Reconciliation {runId:string;cutoff:string;graceSeconds:number;counts:Record<string,number>;totals:Record<string,string>;items:{bankTransactionId:string;paymentReference:string;amountMinor:string;status:string}[];sampleLimit:number}
+export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch('/api/v1' + path, { credentials: 'same-origin', ...options, headers: { 'Content-Type': 'application/json', ...options.headers } });
+  if (!response.ok) { const body: {detail?:string;title?:string;reason?:string} = await response.json().catch(() => ({})); throw new Error(body.detail ?? body.reason ?? body.title ?? `Request failed (${response.status})`); }
+  return response.json() as Promise<T>;
+}
+export const post = <T>(path:string, body?:unknown) => api<T>(path, {method:'POST',body:body === undefined ? undefined : JSON.stringify(body)});
+
